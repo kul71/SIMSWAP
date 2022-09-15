@@ -1,0 +1,7 @@
+{
+  "bootstrap.servers":"pkc-7prvp.centralindia.azure.confluent.cloud:9092",
+  "security.protocol":"SASL_SSL",
+  "sasl.mechanisms":"PLAIN",
+  "sasl.username":"N7YTREOD5YYWVKOF",
+  "sasl.password":"RPOWumNQcWubgNoL+100xCHlgnFkA4D6JXeJ66Ht2w4GjOzFk/X2KNk2JytDO28i"
+}
