@@ -1,7 +1,7 @@
 import Kafka from 'node-rdkafka'
 import * as confconfig from '../confluent-properties.json'
 
-function createConfigMap(config: any): object {
+function createConfigMap (config: any): object {
   if (Object.prototype.hasOwnProperty.call(config, 'security.protocol')) {
     return {
       'bootstrap.servers': config['bootstrap.servers'],
@@ -19,7 +19,7 @@ function createConfigMap(config: any): object {
   }
 }
 
-async function createProducer(onDeliveryReport: any): Promise<Kafka.Producer> {
+async function createProducer (onDeliveryReport: any): Promise<Kafka.Producer> {
   const confconfig1 = createConfigMap(confconfig)
   // console.log(confconfig1)
 
@@ -43,38 +43,36 @@ export interface simSwapMsg {
   sim_provider: string
 }
 
-export default async function createMsg(inmsgValue: simSwapMsg): Promise<simSwapMsg> {
-  const topic = 'SIMSWAP'
-  console.log(inmsgValue)
-  const defValue = { isd_code: '0', phone_number: '0123456789', sim_provider: 'test' }
-  const msgValue = { ...defValue, ...inmsgValue }
-
-  // console.log(`default msg ${defValue}: inmsg = ${inmsgValue} resultant = ${msgValue}`)
-  console.log('default msg ' + JSON.stringify(defValue) +
-    ': inmsg = ' + JSON.stringify(inmsgValue) +
-    ' resultant = ' + JSON.stringify(msgValue))
-
-  const onDelReport = (err: string, report: any): any => {
-    if (err === '') {
-      console.warn('Error producing', err)
-    } else {
-      console.log(report)
-      const { topic, key, value } = report
-      const k = key.toString().padEnd(10, ' ')
-      console.log(`Produced event to topic ${String(topic)}: key = ${String(k)} value = ${String(value)}`)
-    }
+const onDelReport = (err: string, report: any): void => {
+  // -----
+  // console.log() calls result in below exceptions during tests
+  // **** Cannot log after tests are done. Did you forget to wait for something async in your test?
+  // however tests pass as well as code runs fine without any problem
+  // -----
+  if (typeof err !== 'undefined' && err !== null && err !== '') {
+    console.warn('Error producing', err)
+  } else {
+    // console.log(report)
+    // const { topic, key, value } = report
+    // const k = key.toString()
+    // console.log(`Produced event to topic ${String(topic)}: key = ${String(k)} value = ${String(value)}`)
   }
+}
 
-  const producer = await createProducer(onDelReport)
+export default async function createMsg (msgValue: simSwapMsg): Promise<simSwapMsg | null> {
+  const topic = 'SIMSWAP'
+  console.log(' input = ' + JSON.stringify(msgValue))
 
   const key = msgValue.isd_code + msgValue.phone_number
   const value = Buffer.from(JSON.stringify(msgValue))
 
-  await producer.produce(topic, -1, value, key)
+  const producer = await createProducer(onDelReport)
+  const ismsgcreated = producer.produce(topic, -1, value, key)
+  // console.log('produce result:' + String(iscreated))
 
   producer.flush(10000, () => {
     producer.disconnect()
   })
 
-  return msgValue
+  return (ismsgcreated === true) ? msgValue : null
 }
